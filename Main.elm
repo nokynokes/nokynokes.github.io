@@ -8,7 +8,7 @@ import Window exposing (Size)
 import Task
 import Time exposing (Time)
 import AnimationFrame
-import ChromaticDelay
+import TerrianRayMarch
 import WebGL.Texture as Texture exposing (Texture, Error)
 
 
@@ -18,16 +18,16 @@ import WebGL.Texture as Texture exposing (Texture, Error)
 -- MESH --
 
 
-mesh : Mesh ChromaticDelay.Vertex
+mesh : Mesh TerrianRayMarch.Vertex
 mesh =
     WebGL.triangles
-        [ ( ChromaticDelay.Vertex (vec3 -1 1 0)
-          , ChromaticDelay.Vertex (vec3 1 1 0)
-          , ChromaticDelay.Vertex (vec3 -1 -1 0)
+        [ ( TerrianRayMarch.Vertex (vec3 -1 1 0)
+          , TerrianRayMarch.Vertex (vec3 1 1 0)
+          , TerrianRayMarch.Vertex (vec3 -1 -1 0)
           )
-        , ( ChromaticDelay.Vertex (vec3 -1 -1 0)
-          , ChromaticDelay.Vertex (vec3 1 1 0)
-          , ChromaticDelay.Vertex (vec3 1 -1 0)
+        , ( TerrianRayMarch.Vertex (vec3 -1 -1 0)
+          , TerrianRayMarch.Vertex (vec3 1 1 0)
+          , TerrianRayMarch.Vertex (vec3 1 -1 0)
           )
         ]
 
@@ -35,7 +35,7 @@ mesh =
 type alias Model =
   { size : Size
   , time : Float
-  , tex : Maybe WebGL.Texture
+  -- , tex : Maybe WebGL.Texture
   }
 
 -- initModel : Model
@@ -44,21 +44,19 @@ type alias Model =
 type Msg
   = Resize Size
   | Tick Time
-  | TexLoad WebGL.Texture
-  | TexError Error
+  -- | TexLoad WebGL.Texture
+  -- | TexError Error
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
     Resize s -> { model | size = s } ! []
     Tick t -> { model | time = model.time + t } ! []
-    TexLoad tex2D -> {model |tex = Just tex2D } ! []
-    TexError _ -> Debug.crash "error loading texture"
+    -- TexLoad tex2D -> {model |tex = Just tex2D } ! []
+    -- TexError _ -> Debug.crash "error loading texture"
 
 view : Model -> Html Msg
-view {size, time, tex} =
-  case tex of
-    Just tex2D ->
+view {size, time} =
       div []
           [ WebGL.toHtml
             [ width size.width
@@ -66,15 +64,15 @@ view {size, time, tex} =
             , style [("display","block")]
             ]
             [ WebGL.entity
-                ChromaticDelay.vert
-                ChromaticDelay.frag
+                TerrianRayMarch.vert
+                TerrianRayMarch.frag
                 mesh
                 { iResolution = vec3 (toFloat size.width) (toFloat size.height) 0
-                , iGlobalTime = time
-                , iChannel0 = tex2D
+                , iGlobalTime = time / 1000
                 }
             ]
-          , a [ style
+          , a [ href "https://www.shadertoy.com/view/4tBBDd"
+              , style
                     [ ( "position", "absolute" )
                     , ( "top", "0" )
                     , ( "color", "#fff" )
@@ -84,22 +82,17 @@ view {size, time, tex} =
                     ]
               ]
             [
-              let
-                w = toString size.width
-                h = toString size.height
-              in
-                text <| "height: " ++ h ++ " " ++ "width: " ++ w
+                text "https://www.shadertoy.com/view/4tBBDd"
             ]
           ]
-    Nothing -> div [] []
 
 
 init : (Model, Cmd Msg)
 init =
-  {size = Size 0 0, time = 0, tex = Nothing} ! [ Task.perform Resize Window.size
-                                               , Texture.load "graynoise.png" |> Task.attempt (\result -> case result of
-                                                                                                            Err err -> TexError err
-                                                                                                            Ok val -> TexLoad val )
+  {size = Size 0 0, time = 0 } ! [ Task.perform Resize Window.size
+                                               -- , Texture.load "graynoise.png" |> Task.attempt (\result -> case result of
+                                               --                                                              Err err -> TexError err
+                                               --                                                              Ok val -> TexLoad val )
                                                ]
 
 subs : Model -> Sub Msg
