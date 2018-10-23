@@ -14,6 +14,9 @@ type alias Vertex =
 type alias Uniforms =
   { iResolution : Vec3
   , iGlobalTime : Float
+  , xEye : Float
+  , yEye : Float
+  , zEye : Float
   }
 
 type alias Varying =
@@ -39,8 +42,11 @@ frag =
         varying vec2 vFragCoord;
         uniform float iGlobalTime;
         uniform vec3 iResolution;
+        uniform float xEye;
+        uniform float yEye;
+        uniform float zEye;
 
-        const vec3 eye = vec3(-5.8, -5.35, 10);
+        vec3 eye = vec3(xEye, yEye, zEye);
         const float FOV = 180.0;
         const float FD = 40.0;
 
@@ -66,6 +72,7 @@ frag =
         }
         void mainImage(out vec4 fragColor, in vec2 fc){
             vec2 fragCoord = vec2(fc.x, fc.y);
+            if (fragCoord.y > 0.5) fragCoord.y = 1.0 - fragCoord.y;
             vec2 scr = vec2(1);
             float t = iGlobalTime;
         	vec3 f = normalize(vec3(0.25,1.0,-4.0) - eye+vec3(cos(t)/2.0,-sin(t)/2.0,0.0));
@@ -74,7 +81,7 @@ frag =
         	float dist = dts(eye, (
         		mat4(vec4(s, 0.0),vec4(u, 0.0),vec4(-f, 0.0),vec4(0.0, 0.0, 0.0, 1.0))
         		*vec4(normalize(vec3(fragCoord - scr / 2.0, -scr.y / tan(radians(73.0+FOV) / 2.0))), 0.0)
-        	).xyz, 1.0, 100.0, t*3.0);
+        	).xyz, 1.0, 100.0, t);
             if (dist > 100.0){
                 fragColor = vec4(1.0);
             }
