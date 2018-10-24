@@ -10,25 +10,27 @@ import Task
 import Time exposing (Time)
 import AnimationFrame
 import Balleidoscope
+import TerrianRayMarch
 import WebGL.Texture as Texture exposing (Texture, Error)
 
 
 
-
+type alias Vertex =
+     { position : Vec3 }
 
 -- MESH --
 
 
-mesh : Mesh Balleidoscope.Vertex
+mesh : Mesh Vertex
 mesh =
     WebGL.triangles
-        [ ( Balleidoscope.Vertex (vec3 -1 1 0)
-          , Balleidoscope.Vertex (vec3 1 1 0)
-          , Balleidoscope.Vertex (vec3 -1 -1 0)
+        [ ( Vertex (vec3 -1 1 0)
+          , Vertex (vec3 1 1 0)
+          , Vertex (vec3 -1 -1 0)
           )
-        , ( Balleidoscope.Vertex (vec3 -1 -1 0)
-          , Balleidoscope.Vertex (vec3 1 1 0)
-          , Balleidoscope.Vertex (vec3 1 -1 0)
+        , ( Vertex (vec3 -1 -1 0)
+          , Vertex (vec3 1 1 0)
+          , Vertex (vec3 1 -1 0)
           )
         ]
 
@@ -69,8 +71,8 @@ view {size, time} =
             , style [("display","block")]
             ]
             [ WebGL.entity
-                Balleidoscope.vert
-                Balleidoscope.frag
+                TerrianRayMarch.vert
+                TerrianRayMarch.frag
                 mesh
                 { iResolution = vec3 (toFloat size.width) (toFloat size.height) 0
                 , iGlobalTime = time / 1000
