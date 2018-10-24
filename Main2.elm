@@ -2,7 +2,7 @@ import WebGL exposing (..)
 import Math.Vector2 as Vec2 exposing (Vec2)
 import Math.Vector3 as Vec3 exposing (Vec3, vec3)
 import Math.Vector4 as Vec4 exposing (Vec4, vec4)
-import Html exposing (Html, div, text, a)
+import Html exposing (Html, div, text, a, body,img)
 import Html.Events exposing (onInput)
 import Html.Attributes as Attributes exposing (..)
 import Window exposing (Size)
@@ -12,6 +12,7 @@ import AnimationFrame
 import Balleidoscope
 import TerrianRayMarch
 import WebGL.Texture as Texture exposing (Texture, Error)
+--import StyleSheet
 
 
 
@@ -62,10 +63,27 @@ update msg model =
     -- TexLoad tex2D -> { model | tex = Just tex2D } ! []
     -- TexError _ -> Debug.crash("Error loading texture")
 
+
+
+top : Html Msg
+top =
+  Html.header
+    [ style
+        [ ("width","480px")
+        , ("margin","0px 25px 20px 100px")
+        , ("float","left")
+        ]
+    ]
+    [ img [ src "img/nolan-logo.png"] [ ] ]
+
+
 view : Model -> Html Msg
 view {size, time} =
       div []
-          [ WebGL.toHtml
+          [ div [ style [("position","fixed")
+                        ,("width","960px")
+                        , ("margin","0 auto")] ] [ top ]
+          , WebGL.toHtml
             [ width size.width
             , height size.height
             , style [("display","block")]
@@ -79,20 +97,8 @@ view {size, time} =
                 --, iChannel0 = tex2D
                 }
             ]
-          , a [ href "https://www.shadertoy.com/view/ltVSDG"
-              , style
-                    [ ( "position", "absolute" )
-                    , ( "top", "0" )
-                    , ( "color", "#fff" )
-                    , ( "font", "300 20px sans-serif" )
-                    , ( "background-color", "#222" )
-                    , ( "text-decoration", "none" )
-                    ]
-              ]
-            [
-                text "https://www.shadertoy.com/view/ltVSDG"
-            ]
           ]
+
 
 
 init : (Model, Cmd Msg)
