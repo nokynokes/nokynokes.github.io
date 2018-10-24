@@ -68,6 +68,8 @@ frag =
             vec2 fragCoord = vec2(fc.x, fc.y);
             if (fragCoord.y > 0.5) fragCoord.y = 1.0 - fragCoord.y;
             //if (fragCoord.x > 0.5) fragCoord.x = 1.0 - fragCoord.x;
+          //    fragCoord.x -= .5;
+
             vec2 scr = vec2(1);
             float t = iGlobalTime;
         	vec3 f = normalize(vec3(0.25,1.0,-4.0) - eye+vec3(cos(t)/2.0,-sin(t)/2.0,0.0));

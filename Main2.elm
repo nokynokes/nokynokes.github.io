@@ -71,8 +71,8 @@ view {size, time} =
             , style [("display","block")]
             ]
             [ WebGL.entity
-                TerrianRayMarch.vert
-                TerrianRayMarch.frag
+                Balleidoscope.vert
+                Balleidoscope.frag
                 mesh
                 { iResolution = vec3 (toFloat size.width) (toFloat size.height) 0
                 , iGlobalTime = time / 1000
