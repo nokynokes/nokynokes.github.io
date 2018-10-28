@@ -2,9 +2,10 @@ import WebGL exposing (..)
 import Math.Vector2 as Vec2 exposing (Vec2)
 import Math.Vector3 as Vec3 exposing (Vec3, vec3)
 import Math.Vector4 as Vec4 exposing (Vec4, vec4)
-import Html exposing (Html, div, text, a, body,img)
-import Html.Events exposing (onInput)
-import Html.Attributes as Attributes exposing (..)
+import Html
+import Html.Attributes as Attrs
+import Html.Styled exposing (..)
+import Html.Styled.Attributes exposing (css, href, src, style, classList)
 import Window exposing (Size)
 import Task
 import Time exposing (Time)
@@ -12,6 +13,8 @@ import AnimationFrame
 import Balleidoscope
 import TerrianRayMarch
 import WebGL.Texture as Texture exposing (Texture, Error)
+import Css exposing (..)
+import Css.Global as CSSG exposing (global, everything, ul, class)
 --import StyleSheet
 
 
@@ -65,38 +68,63 @@ update msg model =
 
 
 
-top : Html Msg
+top : Html.Html Msg
 top =
-  Html.header
-    [ style
-        [ ("width","480px")
-        , ("margin","0px 25px 20px 100px")
-        , ("float","left")
+   toUnstyled <|
+    header
+      [ classList [("logo",True), ("left",True)] ]
+      [ img [ src "img/nolan-logo.png"] [ ] ]
+
+globalStyles : Html.Html Msg
+globalStyles =
+  toUnstyled <|
+    global
+        [ everything
+            [ before [ margin (px 0), padding (px 0), boxSizing borderBox]
+            , after [ margin (px 0) , padding (px 0), boxSizing borderBox]
+            ]
+        , class "clearfix"
+            [ after
+                [ display Css.table
+                --, Css.content " "
+                -- , clear "both"
+                ]
+            ]
+        , class "container" [ Css.width (px 960), margin2 (px 0) (auto) ]
+        , class "left" [ float left ]
+        , class "right" [ float right ]
+        , class "logo"
+            [ Css.width (px 467)
+            , Css.height (px 77)
+            , marginTop (px 33)
+            , marginBottom (px 33)
+            , float left
+            , position absolute
+            ]
         ]
-    ]
-    [ img [ src "img/nolan-logo.png"] [ ] ]
 
 
-view : Model -> Html Msg
+
+
+view : Model -> Html.Html Msg
 view {size, time} =
-      div []
-          [ div [ style [("position","fixed")
-                        ,("width","960px")
-                        , ("margin","0 auto")] ] [ top ]
+      Html.div []
+          [ globalStyles
+          , Html.div [ ] [ top ]
           , WebGL.toHtml
-            [ width size.width
-            , height size.height
-            , style [("display","block")]
-            ]
-            [ WebGL.entity
-                Balleidoscope.vert
-                Balleidoscope.frag
-                mesh
-                { iResolution = vec3 (toFloat size.width) (toFloat size.height) 0
-                , iGlobalTime = time / 1000
-                --, iChannel0 = tex2D
-                }
-            ]
+              [ Attrs.width size.width
+              , Attrs.height size.height
+              , Attrs.style [("display","block"),("position","static")]
+              ]
+              [ WebGL.entity
+                  Balleidoscope.vert
+                  Balleidoscope.frag
+                  mesh
+                  { iResolution = vec3 (toFloat size.width) (toFloat size.height) 0
+                  , iGlobalTime = time / 1000
+                  --, iChannel0 = tex2D
+                  }
+             ]
           ]
 
 
