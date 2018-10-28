@@ -14,8 +14,8 @@ import Balleidoscope
 import TerrianRayMarch
 import WebGL.Texture as Texture exposing (Texture, Error)
 import Css exposing (..)
-import Css.Global as CSSG exposing (global, everything, ul, class)
---import StyleSheet
+import Css.Global as CSSG exposing (global, everything, class)
+import StyleSheet exposing (..)
 
 
 
@@ -68,41 +68,23 @@ update msg model =
 
 
 
-top : Html.Html Msg
-top =
+logoTop : Html.Html Msg
+logoTop =
    toUnstyled <|
-    header
-      [ classList [("logo",True), ("left",True)] ]
-      [ img [ src "img/nolan-logo.png"] [ ] ]
-
-globalStyles : Html.Html Msg
-globalStyles =
-  toUnstyled <|
-    global
-        [ everything
-            [ before [ margin (px 0), padding (px 0), boxSizing borderBox]
-            , after [ margin (px 0) , padding (px 0), boxSizing borderBox]
-            ]
-        , class "clearfix"
-            [ after
-                [ display Css.table
-                --, Css.content " "
-                -- , clear "both"
-                ]
-            ]
-        , class "container" [ Css.width (px 960), margin2 (px 0) (auto) ]
-        , class "left" [ float left ]
-        , class "right" [ float right ]
-        , class "logo"
-            [ Css.width (px 467)
-            , Css.height (px 77)
-            , marginTop (px 33)
-            , marginBottom (px 33)
-            , float left
-            , position absolute
-            ]
+    div
+      [ classList [("container",True),("clearfix",True)]]
+      [ header
+        [ classList [("logo",True), ("left",True)] ]
+        [ ]
+      , nav
+        [ classList [("right",True)] ]
+        [ ul []
+          [ li
+            []
+            [ a [ ] [text "Work"] ]
+          ]
         ]
-
+      ]
 
 
 
@@ -110,7 +92,8 @@ view : Model -> Html.Html Msg
 view {size, time} =
       Html.div []
           [ globalStyles
-          , Html.div [ ] [ top ]
+          , desktopStyles
+          , logoTop
           , WebGL.toHtml
               [ Attrs.width size.width
               , Attrs.height size.height
@@ -122,7 +105,6 @@ view {size, time} =
                   mesh
                   { iResolution = vec3 (toFloat size.width) (toFloat size.height) 0
                   , iGlobalTime = time / 1000
-                  --, iChannel0 = tex2D
                   }
              ]
           ]
