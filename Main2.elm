@@ -3,6 +3,7 @@ import Math.Vector2 as Vec2 exposing (Vec2)
 import Math.Vector3 as Vec3 exposing (Vec3, vec3)
 import Math.Vector4 as Vec4 exposing (Vec4, vec4)
 import Html
+import Html.Lazy exposing (lazy2)
 import Html.Attributes as Attrs
 import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (css, href, src, style, classList)
@@ -86,6 +87,22 @@ logoTop =
         ]
       ]
 
+shaderBG : Size -> Float -> Html.Html Msg
+shaderBG size time =
+  WebGL.toHtml
+      [ Attrs.width size.width
+      , Attrs.height size.height
+      , Attrs.style [("display","block"),("position","static")]
+      ]
+      [ WebGL.entity
+          Balleidoscope.vert
+          Balleidoscope.frag
+          mesh
+          { iResolution = vec3 (toFloat size.width) (toFloat size.height) 0
+          , iGlobalTime = time / 1000
+          }
+     ]
+
 
 
 view : Model -> Html.Html Msg
@@ -94,19 +111,7 @@ view {size, time} =
           [ globalStyles
           , desktopStyles
           , logoTop
-          , WebGL.toHtml
-              [ Attrs.width size.width
-              , Attrs.height size.height
-              , Attrs.style [("display","block"),("position","static")]
-              ]
-              [ WebGL.entity
-                  Balleidoscope.vert
-                  Balleidoscope.frag
-                  mesh
-                  { iResolution = vec3 (toFloat size.width) (toFloat size.height) 0
-                  , iGlobalTime = time / 1000
-                  }
-             ]
+          , lazy2 shaderBG size time
           ]
 
 
