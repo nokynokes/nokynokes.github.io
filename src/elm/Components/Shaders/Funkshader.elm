@@ -1,4 +1,4 @@
-module Funkshader exposing (..)
+module Components.Shaders.Funkshader exposing (..)
 
 import WebGL exposing (..)
 import Math.Vector2 as Vec2 exposing (Vec2)

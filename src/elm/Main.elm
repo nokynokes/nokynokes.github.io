@@ -2,25 +2,19 @@ import WebGL exposing (..)
 import Math.Vector2 as Vec2 exposing (Vec2)
 import Math.Vector3 as Vec3 exposing (Vec3, vec3)
 import Math.Vector4 as Vec4 exposing (Vec4, vec4)
-import Html
+import Html exposing (..)
 import Html.Lazy exposing (lazy2)
-import Html.Attributes as Attrs
-import Html.Styled exposing (..)
-import Html.Styled.Attributes exposing (css, href, src, style, classList)
+import Html.Attributes as Attrs exposing (..)
 import Window exposing (Size)
 import Task
 import Time exposing (Time)
 import AnimationFrame
-import Balleidoscope
-import TerrianRayMarch
 import WebGL.Texture as Texture exposing (Texture, Error)
-import Css exposing (..)
-import Css.Global as CSSG exposing (global, everything, class)
-import StyleSheet exposing (..)
-
+import Components.Shaders.Balleidoscope exposing (..)
 
 
 type alias Vertex =
+
      { position : Vec3 }
 
 -- MESH --
@@ -68,35 +62,16 @@ update msg model =
     -- TexError _ -> Debug.crash("Error loading texture")
 
 
-
-logoTop : Html.Html Msg
-logoTop =
-   toUnstyled <|
-    div
-      [ classList [("container",True),("clearfix",True)]]
-      [ header
-        [ classList [("logo",True), ("left",True)] ]
-        [ ]
-      , nav
-        [ classList [("right",True)] ]
-        [ ul []
-          [ li
-            []
-            [ a [ ] [text "Work"] ]
-          ]
-        ]
-      ]
-
 shaderBG : Size -> Float -> Html.Html Msg
 shaderBG size time =
   WebGL.toHtml
       [ Attrs.width size.width
       , Attrs.height size.height
-      , Attrs.style [("display","block"),("position","static")]
+      --, Attrs.style [("display","block"),("position","static")]
       ]
       [ WebGL.entity
-          Balleidoscope.vert
-          Balleidoscope.frag
+          vert
+          frag
           mesh
           { iResolution = vec3 (toFloat size.width) (toFloat size.height) 0
           , iGlobalTime = time / 1000
@@ -108,11 +83,8 @@ shaderBG size time =
 view : Model -> Html.Html Msg
 view {size, time} =
       Html.div []
-          [ globalStyles
-          , desktopStyles
-          , logoTop
-          , lazy2 shaderBG size time
-          ]
+          [ lazy2 shaderBG size time ]
+
 
 
 
@@ -122,6 +94,7 @@ init =
                                 -- , Texture.load "graynoise.png" |>
                                 --     Task.attempt (\result -> case result of
                                 --                                 Err err -> TexError err
+
                                 --                                 Ok val -> TexLoad val )
                                 ]
 

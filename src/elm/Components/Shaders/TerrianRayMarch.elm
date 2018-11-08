@@ -1,4 +1,4 @@
-module TerrianRayMarch exposing (..)
+module Components.Shaders.TerrianRayMarch exposing (..)
 
 import WebGL exposing (..)
 import WebGL.Texture

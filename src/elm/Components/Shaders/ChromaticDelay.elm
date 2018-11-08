@@ -1,4 +1,4 @@
-module ChromaticDelay exposing (..)
+module Components.Shaders.ChromaticDelay exposing (..)
 
 import WebGL exposing (..)
 import WebGL.Texture

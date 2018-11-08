@@ -62,6 +62,8 @@ if (isDev === true) {
         ],
         devServer: {
             // serve index.html in place of 404 responses
+            // host:'0.0.0.0',
+            // disableHostCheck:true,
             historyApiFallback: true,
             contentBase: './src',
             hot: true

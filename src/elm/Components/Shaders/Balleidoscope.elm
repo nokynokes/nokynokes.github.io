@@ -1,4 +1,4 @@
-module Balleidoscope exposing (..)
+module Components.Shaders.Balleidoscope exposing (..)
 
 import WebGL exposing (..)
 import WebGL.Texture
