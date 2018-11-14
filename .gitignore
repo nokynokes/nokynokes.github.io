@@ -4,3 +4,4 @@ tmp/
 dist/
 yarn.lock
 .DS_Store
+package-lock.json

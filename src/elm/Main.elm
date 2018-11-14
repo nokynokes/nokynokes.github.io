@@ -10,12 +10,15 @@ import Task
 import Time exposing (Time)
 import AnimationFrame
 import WebGL.Texture as Texture exposing (Texture, Error)
-import Components.Shaders.Balleidoscope exposing (..)
+import Components.Shaders.Funkshader exposing (..)
+import Bootstrap.Grid as Grid exposing (..)
+import Bootstrap.CDN as CDN exposing (..)
 
 
 type alias Vertex =
 
      { position : Vec3 }
+
 
 -- MESH --
 
@@ -64,26 +67,41 @@ update msg model =
 
 shaderBG : Size -> Float -> Html.Html Msg
 shaderBG size time =
-  WebGL.toHtml
-      [ Attrs.width size.width
-      , Attrs.height size.height
-      --, Attrs.style [("display","block"),("position","static")]
-      ]
-      [ WebGL.entity
-          vert
-          frag
-          mesh
-          { iResolution = vec3 (toFloat size.width) (toFloat size.height) 0
-          , iGlobalTime = time / 1000
-          }
-     ]
+    div [ ]
+        [ Grid.container [ style [("position","relative"),("z-index","1")]]
+           [ Grid.row  []
+             [ Grid.col [] [text "Col 1"]
+             , Grid.col [] [text "Col 2"]
+             ]
+           ]
+        , WebGL.toHtml
+          [ width size.width
+          , height size.height
+          , style
+              [ ("position","fixed")
+              , ("top","0")
+              , ("left","0")
+              --, ("z-index","-1")
+              ]
+          ]
+          [ WebGL.entity
+              vert
+              frag
+              mesh
+              { iResolution = vec3 (toFloat size.width) (toFloat size.height) 0
+              , iGlobalTime = time / 1000
+              }
+         ]
+       ]
 
 
 
 view : Model -> Html.Html Msg
 view {size, time} =
       Html.div []
-          [ lazy2 shaderBG size time ]
+          [ --CDN.stylesheet
+          lazy2 shaderBG size time
+          ]
 
 
 
