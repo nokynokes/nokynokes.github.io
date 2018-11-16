@@ -3,7 +3,7 @@ import Math.Vector2 as Vec2 exposing (Vec2)
 import Math.Vector3 as Vec3 exposing (Vec3, vec3)
 import Math.Vector4 as Vec4 exposing (Vec4, vec4)
 import Html exposing (..)
-import Html.Lazy exposing (lazy2)
+import Html.Lazy exposing (..)
 import Html.Attributes as Attrs exposing (..)
 import Window exposing (Size)
 import Task
@@ -13,7 +13,12 @@ import WebGL.Texture as Texture exposing (Texture, Error)
 import Components.Shaders.Funkshader exposing (..)
 import Bootstrap.Grid as Grid exposing (..)
 import Bootstrap.CDN as CDN exposing (..)
-
+import Bootstrap.Navbar as Navbar
+import Bootstrap.Card as Card
+import Bootstrap.Card.Block as Block
+import Bootstrap.Button as Button
+import Bootstrap.Utilities.Spacing as Spacing
+import StyleSheet exposing (logo)
 
 type alias Vertex =
 
@@ -21,6 +26,7 @@ type alias Vertex =
 
 
 -- MESH --
+
 
 
 mesh : Mesh Vertex
@@ -40,12 +46,9 @@ mesh =
 type alias Model =
   { size : Size
   , time : Float
-  --, eye : Vec3
-  --, tex : Maybe WebGL.Texture
+  , navbarState : Navbar.State
   }
 
--- initModel : Model
--- initModel = Model (Size 0 0) 0
 
 
 
@@ -53,28 +56,21 @@ type alias Model =
 type Msg
   = Resize Size
   | Tick Time
-  -- | TexLoad WebGL.Texture
-  -- | TexError Error
+  | NavbarMsg Navbar.State
+
+
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
     Resize s -> { model | size = s } ! []
     Tick t -> { model | time = model.time + t } ! []
-    -- TexLoad tex2D -> { model | tex = Just tex2D } ! []
-    -- TexError _ -> Debug.crash("Error loading texture")
+    NavbarMsg state -> {model | navbarState = state} ! []
 
 
 shaderBG : Size -> Float -> Html.Html Msg
 shaderBG size time =
-    div [ ]
-        [ Grid.container [ style [("position","relative"),("z-index","1")]]
-           [ Grid.row  []
-             [ Grid.col [] [text "Col 1"]
-             , Grid.col [] [text "Col 2"]
-             ]
-           ]
-        , WebGL.toHtml
+    WebGL.toHtml
           [ width size.width
           , height size.height
           , style
@@ -92,15 +88,58 @@ shaderBG size time =
               , iGlobalTime = time / 1000
               }
          ]
+
+
+navBar : Navbar.State -> Html.Html Msg
+navBar state =
+  Navbar.config NavbarMsg
+        |> Navbar.withAnimation
+        |> Navbar.brand [ ] [ text "Other"]
+        |> Navbar.attrs
+            [ style
+                [ ("margin-top","33px")
+                , ("margin-bottom","33px")
+                , ("margin-right","33px")
+                , ("float","right")
+                ]
+            ]
+        |> Navbar.items
+            [ Navbar.itemLink [href "https://github.com/nokynokes"] [ text "GitHub"]
+            , Navbar.itemLink [href "https://www.linkedin.com/in/nolan-cretney-164078106/"] [ text "LinkedIn"]
+            ]
+        |> Navbar.view state
+logo : Html.Html Msg
+logo =
+  Card.config [ Card.attrs [ style [ ("margin-top","33px"),("margin-bottom","33px"),("width","20rem")] ] ]
+    |> Card.header [ class "text-left" ]
+        [ img [ src "static/img/me2.png"
+              , style [("max-height","150 px"),("max-width","200px"),("margin","auto")]
+              ] []
+        , h3 [ Spacing.mt2 ] [ text "Nolan Cretney" ] ]
+    |> Card.block []
+        [ Block.titleH4 [] [ text "About Me" ]
+        , Block.text [] [ text "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. A condimentum vitae sapien pellentesque. Ut ornare lectus sit amet est. Ut tristique et egestas quis ipsum. Dignissim cras tincidunt lobortis feugiat vivamus. Adipiscing elit ut aliquam purus sit amet. Morbi tristique senectus et netus et malesuada fames ac. Volutpat est velit egestas dui. Id ornare arcu odio ut sem nulla pharetra diam. Integer malesuada nunc vel risus commodo. Nibh sit amet commodo nulla facilisi nullam. In arcu cursus euismod quis viverra. In ornare quam viverra orci sagittis. Mattis pellentesque id nibh tortor. Eu nisl nunc mi ipsum. Viverra mauris in aliquam sem fringilla ut morbi tincidunt augue. Quam viverra orci sagittis eu volutpat odio facilisis." ]
+        --, Block.custom <|
+          --  Button.button [ Button.primary ] [ text "Go somewhere" ]
+        ]
+    |> Card.view
+
+top : Navbar.State -> Html.Html Msg
+top state =
+  Grid.container [ style [("position","relative"),("z-index","1")] ]
+     [ Grid.row  []
+       [ Grid.col [] [ logo ]
+       , Grid.col [] [ lazy navBar state ]
        ]
+     ]
 
 
 
 view : Model -> Html.Html Msg
-view {size, time} =
+view {size, time, navbarState} =
       Html.div []
-          [ --CDN.stylesheet
-          lazy2 shaderBG size time
+          [ top navbarState
+          , shaderBG size time
           ]
 
 
@@ -108,20 +147,19 @@ view {size, time} =
 
 init : (Model, Cmd Msg)
 init =
-  {size = Size 0 0, time = 0} ! [ Task.perform Resize Window.size
-                                -- , Texture.load "graynoise.png" |>
-                                --     Task.attempt (\result -> case result of
-                                --                                 Err err -> TexError err
-
-                                --                                 Ok val -> TexLoad val )
-                                ]
+  let
+    (state, navbarCmd) = Navbar.initialState NavbarMsg
+  in
+    {size = Size 0 0, time = 0, navbarState = state} ! [ Task.perform Resize Window.size, navbarCmd]
 
 
 subs : Model -> Sub Msg
 subs model =
   Sub.batch
   [ Window.resizes Resize
-  , AnimationFrame.diffs Tick ]
+  , AnimationFrame.diffs Tick
+  , Navbar.subscriptions model.navbarState NavbarMsg
+  ]
 
 
 
