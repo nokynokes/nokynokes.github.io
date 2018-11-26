@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>JQuery Append and add class</title>
+		<style>
+			.bigredhead {
+				color: red;
+				font-size: 10em;
+			}
+		</style>
+	</head>
+	<body>
+		<header id="mainheader">
+
+		</header>
+
+
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+	<script>window.jQuery || document.write('<script src="js/jquery-2.1.4.min.js><\/script>');</script>
+	<script>
+	'use strict';
+	$(document).ready(function(){
+		//code goes here
+		console.log('hear me now?');
+
+		$('#mainheader').append('<h1>holy shit!</h1>').addClass('bigredhead');
+
+	}); //end ready
+	</script>
+	</body>
+</html>
