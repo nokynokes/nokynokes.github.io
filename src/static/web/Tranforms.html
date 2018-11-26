@@ -1,0 +1,142 @@
+<!doctype html>
+<html>
+<head>
+	<title>practice transforms</title>
+	<style>
+	.container {
+		width: 90%;
+		max-width: 960px;
+		margin: 0 auto;
+		text-align: center;
+		background: yellow;
+	}
+
+	  .boxy {
+	  	background: orange;
+	  	border: solid 1px black;
+	  	width: 150px;
+	  	height: 100px;
+	  	text-align: center;
+	  	margin-bottom: 30px;
+	  	display: inline-block;
+	  	cursor: pointer;
+	}
+
+	  .scaled {
+	  	/*transform: scaleY(2) skewX(0deg);*/
+	  	transform: scaleY(3) skewX(45deg);
+	  	transition: all 200ms ease-in;
+	  	cursor: pointer;
+	  }
+
+	  .scaled:hover {
+	    transform: scaleY(2.1) skewX(4deg);
+	  	color: green;
+	  	text-shadow: 2px 2px 2px #000000;
+	  }
+
+
+	  .rotated {
+	  	transition: all 900ms ease-in;
+	  }
+
+	  .rotated:hover {
+	  	transform: rotate(90deg);
+	  } 
+
+	  .skewed {
+	  	transition: all 900ms ease-in;
+	  }
+
+	  .skewed:hover {
+	  	transform: skewX(12deg) skewY(14deg);
+	  } 
+
+	  .translated {
+	  	opacity: 0.4;
+	  	transition: all 100ms ease-in;
+	  }
+
+	  .translated:hover {
+	  	/*opacity: 1;
+	  	transform: translateX(5px) translateY(-5px);*/
+		-moz-transform: scale(1.7) rotate(34deg) translateX(43px) translateY(34px) skewX(43deg) skewY(34deg);
+		-webkit-transform: scale(1.7) rotate(34deg) translateX(43px) translateY(34px) skewX(43deg) skewY(34deg);
+		-o-transform: scale(1.7) rotate(34deg) translateX(43px) translateY(34px) skewX(43deg) skewY(34deg);
+		-ms-transform: scale(1.7) rotate(34deg) translateX(43px) translateY(34px) skewX(43deg) skewY(34deg);
+		transform: scale(1.7) rotate(34deg) translateX(43px) translateY(34px) skewX(43deg) skewY(34deg);
+	  } 
+
+	  .group-perspective {
+		perspective: 500px;
+	}
+
+	  .group {
+	  	transition: all 1500ms ease;
+	  	transform: rotateX(20deg);
+	  	/*backface-visibility: hidden;*/
+	  }
+
+	  .group:hover {
+	  	/*transform: translate3d(150px, -50px, 100px);*/
+	  	transform: rotateY(120deg); 
+	  	/*transform-style: preserve-3d;*/
+	  }
+
+       .growpic {
+     	transition: all 1500ms ease;
+     } 
+
+     .growpic:hover {
+     	transform: scale(1.3);
+     }
+
+     .noflow {
+     	overflow: hidden;
+     }
+
+	</style>
+</head>
+<body>
+<div class="container">
+
+<header class="scaled">
+	<h1>CSS Transforms and Transitions</h1>
+</header>
+
+<header class="boxy rotated">
+<h2>rotate</h2>
+</header>
+
+<header class="boxy skewed">
+<h2>skew</h2>
+</header>
+
+<header class="boxy translated">
+<h2>translate</h2>
+</header>
+
+<div class="group-perspective">
+<header class="boxy group">
+<h2>hello</h2>
+</header>
+
+<header class="boxy group">
+<h2>hello</h2>
+</header>
+
+<header class="boxy group">
+<h2>hello</h2>
+</header>
+
+</div><!-- end group perspective -->
+
+
+<figure class="boxy noflow">
+	<img src="http://placehold.it/150x100" class="growpic">
+</figure>
+
+</div><!-- end container -->
+
+</body>
+</html>

@@ -1,0 +1,116 @@
+/* universal styles */
+
+*,
+*:before,
+*:after {
+	margin: 0;
+	padding: 0;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	box-sizing: border-box;
+}
+
+.clearfix:after {
+	display: table;
+	content: " ";
+	clear: both;
+}
+
+.left {
+	float: left;
+}
+
+.right {
+	float: right;
+}
+
+.bumpright {
+	margin-right: 10px;
+}
+
+.bumpleft {
+	margin-left: 10px;
+}
+.centerme {
+	text-align: center;
+}
+
+
+/* global styles */
+
+.container {
+	width: 960px;
+	margin: 0 auto;
+}
+
+body {
+	background-color:black;
+	background-image:
+	radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 40px),
+	radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 30px),
+	radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 40px),
+	radial-gradient(rgba(255,255,255,.4), rgba(255,255,255,.1) 2px, transparent 30px);
+	background-size: 550px 550px, 350px 350px, 250px 250px, 150px 150px; 
+	background-position: 0 0, 40px 60px, 130px 270px, 70px 100px;
+	/*background: url('../img/pattern-blue.jpg');*/
+	/*background: url('../img/bg-pluto-horizon.jpg') no-repeat center center fixed rgba(72, 126, 142, .8);*/
+	/*background: url('../img/bg-pluto-horizon-text.jpg') no-repeat center center fixed rgba(72, 126, 142, .8);
+	background-size: cover;*/
+	/*background: rgba(72, 126, 142, .8);*/
+	font-family: 'Open Sans', sans-serif;
+	font-size: 14px;
+}
+
+img {
+	-webkit-border-radius: 20px 5px 1px 1px;
+	border-radius: 49px 49px 49px 49px;
+}
+
+header, 
+section,
+footer {
+
+	background: rgba(236, 236, 236, 0.76);
+  	border: solid 2px rgba(211, 102, 102, 1);
+	padding: 10px 15px;
+	margin-bottom: 20px;
+	-webkit-border-radius: 20px 5px 1px 1px;
+	border-radius: 49px 49px 49px 49px;
+	text-shadow: 6px 4px 20px #1F428E;
+	resize: both;
+	overflow: auto;
+	min-width: 50px; /*suggest a min-width &amp; min-height*/
+	min-height: 50px;
+}
+
+h1, 
+h2,
+p {
+	margin-bottom: 10px;
+}
+
+.mainheader {
+	background: url('../img/float-on-title.png') center no-repeat rgba(255,255,255,0.85);
+	height: 83px;
+}
+
+.mainheader h1 {
+	position: absolute;
+	top: -9999em;
+	left: -9999em;
+}
+
+.twocolumn section {
+	width: 470px;
+}
+
+.threecolumn section {
+	width: 310px;
+	float: left;
+	margin-right: 15px;
+}
+
+.threecolumn section:nth-of-type(3n) {
+	margin-right: 0;
+
+}

@@ -1,7 +1,7 @@
 import WebGL exposing (..)
-import Math.Vector2 as Vec2 exposing (Vec2)
+
 import Math.Vector3 as Vec3 exposing (Vec3, vec3)
-import Math.Vector4 as Vec4 exposing (Vec4, vec4)
+
 import Html exposing (..)
 import Html.Lazy exposing (..)
 import Html.Attributes as Attrs exposing (..)
@@ -9,16 +9,15 @@ import Window exposing (Size)
 import Task
 import Time exposing (Time)
 import AnimationFrame
-import WebGL.Texture as Texture exposing (Texture, Error)
+
 import Components.Shaders.Funkshader exposing (..)
 import Bootstrap.Grid as Grid exposing (..)
-import Bootstrap.CDN as CDN exposing (..)
+
 import Bootstrap.Navbar as Navbar
 import Bootstrap.Card as Card
 import Bootstrap.Card.Block as Block
-import Bootstrap.Button as Button
+
 import Bootstrap.Utilities.Spacing as Spacing
-import StyleSheet exposing (logo)
 
 type alias Vertex =
 
@@ -94,7 +93,6 @@ navBar : Navbar.State -> Html.Html Msg
 navBar state =
   Navbar.config NavbarMsg
         |> Navbar.withAnimation
-        |> Navbar.brand [ ] [ text "Other"]
         |> Navbar.attrs
             [ style
                 [ ("margin-top","33px")
@@ -106,11 +104,13 @@ navBar state =
         |> Navbar.items
             [ Navbar.itemLink [href "https://github.com/nokynokes"] [ text "GitHub"]
             , Navbar.itemLink [href "https://www.linkedin.com/in/nolan-cretney-164078106/"] [ text "LinkedIn"]
+            , Navbar.itemLink [href "static/web/index.html"] [ text "Other"]
             ]
         |> Navbar.view state
+
 logo : Html.Html Msg
 logo =
-  Card.config [ Card.attrs [ style [ ("margin-top","33px"),("margin-bottom","33px"),("width","20rem")] ] ]
+  Card.config [ Card.attrs [ style [ ("margin-top","33px"),("margin-bottom","33px") ] ] ]
     |> Card.header [ class "text-left" ]
         [ img [ src "static/img/me2.png"
               , style [("max-height","150 px"),("max-width","200px"),("margin","auto")]
@@ -118,7 +118,7 @@ logo =
         , h3 [ Spacing.mt2 ] [ text "Nolan Cretney" ] ]
     |> Card.block []
         [ Block.titleH4 [] [ text "About Me" ]
-        , Block.text [] [ text "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. A condimentum vitae sapien pellentesque. Ut ornare lectus sit amet est. Ut tristique et egestas quis ipsum. Dignissim cras tincidunt lobortis feugiat vivamus. Adipiscing elit ut aliquam purus sit amet. Morbi tristique senectus et netus et malesuada fames ac. Volutpat est velit egestas dui. Id ornare arcu odio ut sem nulla pharetra diam. Integer malesuada nunc vel risus commodo. Nibh sit amet commodo nulla facilisi nullam. In arcu cursus euismod quis viverra. In ornare quam viverra orci sagittis. Mattis pellentesque id nibh tortor. Eu nisl nunc mi ipsum. Viverra mauris in aliquam sem fringilla ut morbi tincidunt augue. Quam viverra orci sagittis eu volutpat odio facilisis." ]
+        , Block.text [] [ text "Recent Graduate from the University of Colorado, Boulder with an interest in web development. Some of my other interests lie in functional programming, and learning WebGL and glsl/hlsl development"  ]
         --, Block.custom <|
           --  Button.button [ Button.primary ] [ text "Go somewhere" ]
         ]
@@ -129,6 +129,7 @@ top state =
   Grid.container [ style [("position","relative"),("z-index","1")] ]
      [ Grid.row  []
        [ Grid.col [] [ logo ]
+       , Grid.col [] []
        , Grid.col [] [ lazy navBar state ]
        ]
      ]
