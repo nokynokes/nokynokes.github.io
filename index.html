@@ -9,8 +9,171 @@
     <!-- <link rel="shortcut icon" type="image/x-icon" href="favicon.ico"/> -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"/>
     <!-- <link rel="stylesheet" type="test/css" href="styles/main.css"/> -->
+    <script id="vertex-shader" type="x-shader/x-vertex">
+        attribute vec2 position;
+        varying vec2 vFragCoord;
+        void main(void) {
+          vFragCoord = position;
+          gl_Position = vec4(position, 0, 1);
+        }
+    </script>
+    <script id="eq-frag" type="x-shader/x-fragment">
+        precision mediump float;
+        uniform float time;
+        uniform vec2 resolution;
+        uniform sampler2D spectrum;
+        varying vec2 vFragCoord;
+
+
+        void mainImage( out vec4 fragColor, in vec2 fragCoord ) {
+          const float WAVES = 8.0;
+          vec2 uv = fragCoord.xy;
+
+          vec3 color = vec3(0.0);
+
+          for (float i = 0.0; i<WAVES + 1.0; i++) {
+            float freq = texture2D(spectrum, vec2((i / WAVES) * 0.2 , 0.0)).x * 7.0;
+
+            vec2 p = vec2(uv);
+
+            p.x += i * 0.04 + freq * 0.0003;
+            p.y += sin(p.x * 10.0 + time) * cos(p.x * 2.0) * freq * 0.2 * ((i + 1.0) / WAVES);
+            float intensity = abs(0.01 / p.y) * clamp(freq, 0.35, 2.0);
+            color += vec3(1.0 * intensity * (i / 5.0), 0.5 * intensity, 1.75 * intensity) * (3.0 / WAVES);
+          }
+
+          fragColor = vec4(color, 1.0);
+        }
+        void main(){
+          mainImage(gl_FragColor, vFragCoord);
+        }
+    </script>
   </head>
   <body>
+    <canvas id="myCanvas"></canvas>
     <div id="main"></div>
-  <script type="text/javascript" src="static/js/main-a0c223d2beb0897e860f.js"></script></body>
+    <script type="text/javascript">
+
+    function init() {
+      var overlay = document.getElementById( 'overlay' );
+      overlay.remove();
+      // Hacks to deal with different function names in different browsers
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+
+      const audioCtx = new AudioContext();
+      var fragCanvas = document.getElementById('myCanvas');
+      fragCanvas.width = window.innerWidth;
+      fragCanvas.height = window.innerHeight;
+      fragCanvas.addEventListener('resize',function(){
+        fragCanvas.width = window.innerWidth;
+        fragCanvas.height = window.innerHeight;
+      },false);
+      var gl = fragCanvas.getContext("webgl");
+      var source = audioCtx.createBufferSource();
+      var analyser = audioCtx.createAnalyser();
+      //source.connect(audioCtx.destination);
+      source.connect(analyser);
+      analyser.connect(audioCtx.destination);
+
+
+      var request = new XMLHttpRequest();
+      request.open('GET',"audio/Foewi - Frequencies.mp3",true);
+      request.responseType = 'arraybuffer';
+      request.onload = function() {
+        audioCtx.decodeAudioData(request.response, function(response) {
+          /* --- play the sound AFTER we've gotten the buffer loaded --- */
+          //set the buffer to the response we just received.
+          source.buffer = response;
+          //And off we go! .start(0) should play asap.
+          //source.start(0);
+          source.loop = true;
+        }, function () { console.error('The request failed.'); } );
+      }
+      //Now that the request has been defined, actually make the request. (send it)
+      request.send();
+
+      const spectrum = new Uint8Array(analyser.frequencyBinCount);
+      (function updateSpectrum() {
+        requestAnimationFrame(updateSpectrum)
+        analyser.getByteFrequencyData(spectrum)
+      })();
+
+
+      function initQuad(gl) {
+        const vbo = gl.createBuffer()
+        gl.bindBuffer(gl.ARRAY_BUFFER, vbo)
+        const vertices = new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1])
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW)
+        gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0)
+      }
+
+      function renderQuad(gl) {
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
+      }
+
+      function createShader(gl, vertexShaderSrc, fragmentShaderSrc) {
+        const vertexShader = gl.createShader(gl.VERTEX_SHADER)
+        gl.shaderSource(vertexShader, vertexShaderSrc)
+        gl.compileShader(vertexShader)
+        if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
+          throw new Error(gl.getShaderInfoLog(vertexShader))
+        }
+
+        const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)
+        gl.shaderSource(fragmentShader, fragmentShaderSrc)
+        gl.compileShader(fragmentShader)
+        if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
+          throw new Error(gl.getShaderInfoLog(fragmentShader))
+        }
+
+        const shader = gl.createProgram()
+        gl.attachShader(shader, vertexShader)
+        gl.attachShader(shader, fragmentShader)
+        gl.linkProgram(shader)
+        gl.useProgram(shader)
+        return shader
+      }
+
+
+        function createTexture(gl) {
+          const texture = gl.createTexture()
+          gl.bindTexture(gl.TEXTURE_2D, texture)
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+          return texture
+        }
+
+        function copyAudioDataToTexture(gl, audioData, textureArray) {
+          for (let i = 0; i < audioData.length; i++) {
+            textureArray[4 * i + 0] = audioData[i] // R
+            textureArray[4 * i + 1] = audioData[i] // G
+            textureArray[4 * i + 2] = audioData[i] // B
+            textureArray[4 * i + 3] = 255          // A
+          }
+          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, audioData.length, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, textureArray)
+        }
+
+        const fragShader = createShader(gl, document.getElementById('vertex-shader').textContent, document.getElementById('musicbox-frag').textContent);
+        const fragPosition = gl.getAttribLocation(fragShader, 'position');
+        gl.enableVertexAttribArray(fragPosition);
+        const fragTime = gl.getUniformLocation(fragShader, 'time');
+        gl.uniform1f(fragTime, audioCtx.currentTime);
+        const fragResolution = gl.getUniformLocation(fragShader, 'resolution');
+        gl.uniform2f(fragResolution, fragCanvas.width, fragCanvas.height);
+        const fragSpectrumArray = new Uint8Array(4 * spectrum.length);
+        const fragSpectrum = createTexture(gl);
+
+        initQuad(gl);
+        (function renderFragment() {
+          requestAnimationFrame(renderFragment)
+          gl.uniform1f(fragTime, audioCtx.currentTime)
+          copyAudioDataToTexture(gl, spectrum, fragSpectrumArray)
+          renderQuad(gl)
+        })()
+      }
+
+      
+    </script>
+  <script type="text/javascript" src="static/js/main-5ee54fd304c869470074.js"></script></body>
 </html>

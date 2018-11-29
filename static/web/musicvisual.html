@@ -3,147 +3,277 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width">
+    <style>
+			#overlay {
+				position: absolute;
+				z-index: 1;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height:100%;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				opacity: 1;
+				background-color: #000000;
+				color: #ffffff;
+			}
+			#overlay > div {
+				text-align: center;
+			}
+			#overlay > div > button {
+				height: 20px;
+				width: 100px;
+				background: transparent;
+				color: #ffffff;
+				outline: 1px solid #ffffff;
+				border: 0px;
+				cursor: pointer;
+			}
+			#overlay > div > p {
+				color: #777777;
+				font-size: 12px;
+			}
+		</style>
+    <script id="vertex-shader" type="x-shader/x-vertex">
+        attribute vec2 position;
+        varying vec2 vFragCoord;
+        void main(void) {
+          vFragCoord = position;
+          gl_Position = vec4(position, 0, 1);
+        }
+    </script>
+    <script id="fragment-shader" type="x-shader/x-fragment">
+         precision mediump float;
+         uniform float time;
+         uniform vec2 resolution;
+         uniform sampler2D spectrum;
+         varying vec2 vFragCoord;
+
+         void main(void) {
+           vec3 c;
+           vec2 uv = vFragCoord;
+           vec2 p = uv;
+           p.x *= resolution.x / resolution.y;
+           float l = 0.2 * length(p);
+           float intensity = texture2D(spectrum, vec2(l, 0.5)).x;
+           float z = 0.1 * time;
+           for (int i = 0; i < 3; i++) {
+             z += 0.07;
+             uv += p / l * (sin(z) + 1.0) * abs(sin(l * 9.0 - z * 2.0));
+             c[i] = 0.01 / length(abs(mod(uv, 1.0) - 0.5));
+           }
+           gl_FragColor = vec4(c / l * intensity, time);
+         }
+    </script>
+    <script id="eq-frag" type="x-shader/x-fragment">
+        precision mediump float;
+        uniform float time;
+        uniform vec2 resolution;
+        uniform sampler2D spectrum;
+        varying vec2 vFragCoord;
+
+
+        void mainImage( out vec4 fragColor, in vec2 fragCoord ) {
+          const float WAVES = 8.0;
+          vec2 uv = fragCoord.xy;
+
+          vec3 color = vec3(0.0);
+
+          for (float i = 0.0; i<WAVES + 1.0; i++) {
+            float freq = texture2D(spectrum, vec2((i / WAVES) * 0.2 , 0.0)).x * 7.0;
+
+            vec2 p = vec2(uv);
+
+            p.x += i * 0.04 + freq * 0.0003;
+            p.y += sin(p.x * 10.0 + time) * cos(p.x * 2.0) * freq * 0.2 * ((i + 1.0) / WAVES);
+            float intensity = abs(0.01 / p.y) * clamp(freq, 0.35, 2.0);
+            color += vec3(1.0 * intensity * (i / 5.0), 0.5 * intensity, 1.75 * intensity) * (3.0 / WAVES);
+          }
+
+          fragColor = vec4(color, 1.0);
+        }
+        void main(){
+          mainImage(gl_FragColor, vFragCoord);
+        }
+    </script>
+  <script id="musicbox-frag" type="x-shader/x-fragment">
+
+      // Whitney Music Box - Jim Bumgardner
+      // whitneymusicbox.org
+
+      precision mediump float;
+      uniform float time;
+      uniform vec2 resolution;
+      uniform sampler2D spectrum;
+      varying vec2 vFragCoord;
+
+      const float rad = 0.9;
+      const float dots = 128.0;
+      const float duration = 360.0;
+      const vec3 colorsep = vec3(0,2.09,4.18);
+      const float PI = 3.1415926535897932384626433832795;
+      const float PI2 = 2.0*3.1415926535897932384626433832795;
+
+      void mainImage( out vec4 fragColor, in vec2 fragCoord ) {
+        vec2 p = fragCoord.xy/2.0;
+        float tm = mod(time,duration)/duration;
+        p.y *= resolution.y/resolution.x;
+
+        vec3 gradient = vec3(0.0);
+        float intensity;
+        for (float i=1.0; i<=dots; i++)
+        {
+          intensity = texture2D(spectrum,vec2((i/dots) * 0.2,0.0)).x ;
+          float i2pi = i*PI2;
+          float ang = mod(tm*i2pi, PI2);
+          float amp = rad * (1.0-(i-1.0)/dots) * (intensity/5.0);
+          float cang = i2pi/dots;
+          float fade = (intensity/2.0) * pow(smoothstep(0.0,1.0,ang),2.0);
+          //float fade = 0.5 + 0.1 * tan(ang) ;
+          vec2 star_pos = vec2(cos(ang) * amp, -sin(ang) * amp);
+          gradient += (cos(cang+colorsep) + 1.0/2.0) * ((fade / 384.0) / pow(length(star_pos - p), 1.5)) * fade;
+        }
+        fragColor = vec4( gradient, 1.0);
+      }
+
+      void main(){
+        mainImage(gl_FragColor, vFragCoord);
+      }
+  </script>
     <title>Music visualizer</title>
 </head>
 <body>
   <!-- <audio src="Foewi - Frequencies.mp3" type="audio/mpeg"></audio> -->
   <canvas id="myCanvas" style="position:fixed;top:0;left:0"></canvas>
+  <div id="overlay">
+			<div>
+				<button id="startButton">Click to Play</button>
+			</div>
+	</div>
   <script type="text/javascript">
-          // Hacks to deal with different function names in different browsers
-          const AudioContext = window.AudioContext || window.webkitAudioContext;
 
-          const audioCtx = new AudioContext();
-          var fragCanvas = document.getElementById('myCanvas');
-          fragCanvas.width = window.innerWidth;
-          fragCanvas.height = window.innerHeight;
-          var gl = fragCanvas.getContext("webgl");
-          var source = audioCtx.createBufferSource();
-          var analyser = audioCtx.createAnalyser();
-          //source.connect(audioCtx.destination);
-          source.connect(analyser);
-          analyser.connect(audioCtx.destination);
+          var startButton = document.getElementById( 'startButton' );
+          startButton.addEventListener( 'click', init );
+
+          function init() {
+            var overlay = document.getElementById( 'overlay' );
+      		  overlay.remove();
+            // Hacks to deal with different function names in different browsers
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+
+            const audioCtx = new AudioContext();
+            var fragCanvas = document.getElementById('myCanvas');
+            fragCanvas.width = window.innerWidth;
+            fragCanvas.height = window.innerHeight;
+            fragCanvas.addEventListener('resize',function(){
+              fragCanvas.width = window.innerWidth;
+              fragCanvas.height = window.innerHeight;
+            },false);
+            var gl = fragCanvas.getContext("webgl");
+            var source = audioCtx.createBufferSource();
+            var analyser = audioCtx.createAnalyser();
+            //source.connect(audioCtx.destination);
+            source.connect(analyser);
+            analyser.connect(audioCtx.destination);
 
 
-          var request = new XMLHttpRequest();
-          request.open('GET',"audio/Foewi - Frequencies.mp3",true);
-          request.responseType = 'arraybuffer';
-          request.onload = function() {
-            audioCtx.decodeAudioData(request.response, function(response) {
-              /* --- play the sound AFTER we've gotten the buffer loaded --- */
-              //set the buffer to the response we just received.
-              source.buffer = response;
-              //And off we go! .start(0) should play asap.
-              source.start(0);
-              source.loop = true;
-            }, function () { console.error('The request failed.'); } );
-          }
-          //Now that the request has been defined, actually make the request. (send it)
-          request.send();
+            var request = new XMLHttpRequest();
+            request.open('GET',"audio/Bob Moses - Tearing Me Up.mp3",true);
+            request.responseType = 'arraybuffer';
+            request.onload = function() {
+              audioCtx.decodeAudioData(request.response, function(response) {
+                /* --- play the sound AFTER we've gotten the buffer loaded --- */
+                //set the buffer to the response we just received.
+                source.buffer = response;
+                //And off we go! .start(0) should play asap.
+                source.start(0);
+                source.loop = true;
+              }, function () { console.error('The request failed.'); } );
+            }
+            //Now that the request has been defined, actually make the request. (send it)
+            request.send();
 
-          const spectrum = new Uint8Array(analyser.frequencyBinCount);
-          (function updateSpectrum() {
-            requestAnimationFrame(updateSpectrum)
-            analyser.getByteFrequencyData(spectrum)
-          })();
+            const spectrum = new Uint8Array(analyser.frequencyBinCount);
+            (function updateSpectrum() {
+              requestAnimationFrame(updateSpectrum)
+              analyser.getByteFrequencyData(spectrum)
+            })();
 
-          function initQuad(gl) {
-            const vbo = gl.createBuffer()
-            gl.bindBuffer(gl.ARRAY_BUFFER, vbo)
-            const vertices = new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1])
-            gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW)
-            gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0)
-          }
 
-          function renderQuad(gl) {
-            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
-          }
-
-          function createShader(gl, vertexShaderSrc, fragmentShaderSrc) {
-            const vertexShader = gl.createShader(gl.VERTEX_SHADER)
-            gl.shaderSource(vertexShader, vertexShaderSrc)
-            gl.compileShader(vertexShader)
-            if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
-              throw new Error(gl.getShaderInfoLog(vertexShader))
+            function initQuad(gl) {
+              const vbo = gl.createBuffer()
+              gl.bindBuffer(gl.ARRAY_BUFFER, vbo)
+              const vertices = new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1])
+              gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW)
+              gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0)
             }
 
-            const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)
-            gl.shaderSource(fragmentShader, fragmentShaderSrc)
-            gl.compileShader(fragmentShader)
-            if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
-              throw new Error(gl.getShaderInfoLog(fragmentShader))
+            function renderQuad(gl) {
+              gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
             }
 
-            const shader = gl.createProgram()
-            gl.attachShader(shader, vertexShader)
-            gl.attachShader(shader, fragmentShader)
-            gl.linkProgram(shader)
-            gl.useProgram(shader)
-            return shader
-          }
-
-          const vertexSrc =
-          `attribute vec2 position;
-            void main(void) {
-              gl_Position = vec4(position, 0, 1);
-            }` ;
-          const fragSrc =
-           `precision mediump float;
-            uniform float time;
-            uniform vec2 resolution;
-            uniform sampler2D spectrum;
-
-            void main(void) {
-              vec3 c;
-              float z = 0.1 * time;
-              vec2 uv = gl_FragCoord.xy / resolution;
-              vec2 p = uv - 0.5;
-              p.x *= resolution.x / resolution.y;
-              float l = 0.2 * length(p);
-              for (int i = 0; i < 3; i++) {
-                z += 0.07;
-                uv += p / l * (sin(z) + 1.0) * abs(sin(l * 9.0 - z * 2.0));
-                c[i] = 0.01 / length(abs(mod(uv, 1.0) - 0.5));
+            function createShader(gl, vertexShaderSrc, fragmentShaderSrc) {
+              const vertexShader = gl.createShader(gl.VERTEX_SHADER)
+              gl.shaderSource(vertexShader, vertexShaderSrc)
+              gl.compileShader(vertexShader)
+              if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
+                throw new Error(gl.getShaderInfoLog(vertexShader))
               }
-              float intensity = texture2D(spectrum, vec2(l, 0.5)).y;
-              gl_FragColor = vec4(c / l * intensity, time);
-            }` ;
 
-            function createTexture(gl) {
-              const texture = gl.createTexture()
-              gl.bindTexture(gl.TEXTURE_2D, texture)
-              gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-              gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-              gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-              return texture
-            }
-
-            function copyAudioDataToTexture(gl, audioData, textureArray) {
-              for (let i = 0; i < audioData.length; i++) {
-                textureArray[4 * i + 0] = audioData[i] // R
-                textureArray[4 * i + 1] = audioData[i] // G
-                textureArray[4 * i + 2] = audioData[i] // B
-                textureArray[4 * i + 3] = 255          // A
+              const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)
+              gl.shaderSource(fragmentShader, fragmentShaderSrc)
+              gl.compileShader(fragmentShader)
+              if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
+                throw new Error(gl.getShaderInfoLog(fragmentShader))
               }
-              gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, audioData.length, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, textureArray)
+
+              const shader = gl.createProgram()
+              gl.attachShader(shader, vertexShader)
+              gl.attachShader(shader, fragmentShader)
+              gl.linkProgram(shader)
+              gl.useProgram(shader)
+              return shader
             }
 
-            const fragShader = createShader(gl, vertexSrc, fragSrc);
-            const fragPosition = gl.getAttribLocation(fragShader, 'position');
-            gl.enableVertexAttribArray(fragPosition);
-            const fragTime = gl.getUniformLocation(fragShader, 'time');
-            gl.uniform1f(fragTime, audioCtx.currentTime);
-            const fragResolution = gl.getUniformLocation(fragShader, 'resolution');
-            gl.uniform2f(fragResolution, fragCanvas.width, fragCanvas.height);
-            const fragSpectrumArray = new Uint8Array(4 * spectrum.length);
-            const fragSpectrum = createTexture(gl);
 
-            initQuad(gl);
-            (function renderFragment() {
-              requestAnimationFrame(renderFragment)
-              gl.uniform1f(fragTime, audioCtx.currentTime)
-              copyAudioDataToTexture(gl, spectrum, fragSpectrumArray)
-              renderQuad(gl)
-            })()
+              function createTexture(gl) {
+                const texture = gl.createTexture()
+                gl.bindTexture(gl.TEXTURE_2D, texture)
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+                return texture
+              }
+
+              function copyAudioDataToTexture(gl, audioData, textureArray) {
+                for (let i = 0; i < audioData.length; i++) {
+                  textureArray[4 * i + 0] = audioData[i] // R
+                  textureArray[4 * i + 1] = audioData[i] // G
+                  textureArray[4 * i + 2] = audioData[i] // B
+                  textureArray[4 * i + 3] = 255          // A
+                }
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, audioData.length, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, textureArray)
+              }
+
+              const fragShader = createShader(gl, document.getElementById('vertex-shader').textContent, document.getElementById('eq-frag').textContent);
+              const fragPosition = gl.getAttribLocation(fragShader, 'position');
+              gl.enableVertexAttribArray(fragPosition);
+              const fragTime = gl.getUniformLocation(fragShader, 'time');
+              gl.uniform1f(fragTime, audioCtx.currentTime);
+              const fragResolution = gl.getUniformLocation(fragShader, 'resolution');
+              gl.uniform2f(fragResolution, fragCanvas.width, fragCanvas.height);
+              const fragSpectrumArray = new Uint8Array(4 * spectrum.length);
+              const fragSpectrum = createTexture(gl);
+
+              initQuad(gl);
+              (function renderFragment() {
+                requestAnimationFrame(renderFragment)
+                gl.uniform1f(fragTime, audioCtx.currentTime)
+                copyAudioDataToTexture(gl, spectrum, fragSpectrumArray)
+                renderQuad(gl)
+              })()
+            }
 
 
 

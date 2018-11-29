@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <style>
+			#overlay {
+				position: absolute;
+				z-index: 1;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height:100%;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				opacity: 1;
+				background-color: #000000;
+				color: #ffffff;
+			}
+			#overlay > div {
+				text-align: center;
+			}
+			#overlay > div > button {
+				height: 20px;
+				width: 100px;
+				background: transparent;
+				color: #ffffff;
+				outline: 1px solid #ffffff;
+				border: 0px;
+				cursor: pointer;
+			}
+			#overlay > div > p {
+				color: #777777;
+				font-size: 12px;
+			}
+		</style>
+    <script id="vertexShader" type="x-shader/x-vertex">
+      varying vec2 vUv;
+      void main()	{
+        vUv = uv;
+        gl_Position = vec4( position, 1.0 );
+      }
+		</script>
+    <script id="fragmentShader" type="x-shader/x-fragment">
+       precision mediump float;
+       varying vec2 vUv;
+       uniform float time;
+       uniform sampler2D spectrum;
+       uniform vec2 resolution;
+
+       void main() {
+         vec3 c;
+         float z = 0.1 * time;
+         vec2 uv = vUv;
+         vec2 p = uv - 0.5;
+         p.x *= resolution.x / resolution.y;
+         float l = length(p);
+         for (int i = 0; i < 3; i++) {
+           z += 0.07;
+           uv += p / l * (sin(z) + 1.0) * abs(sin(l * 9.0 - z * 2.0));
+           c[i] = 0.01 / length(abs(mod(uv, 1.0) - 0.5));
+         }
+         float intensity = texture2D(spectrum, vec2(l,0.0)).y;
+         gl_FragColor = vec4(c / l * intensity, time);
+       }
+		</script>
+    <script src="js/three.min.js"></script>
+    <script src="js/WebGL.js"></script>
+    <title>Music visualizer</title>
+</head>
+<body>
+  <!-- <audio src="Foewi - Frequencies.mp3" type="audio/mpeg"></audio> -->
+  <!-- <canvas id="myCanvas" style="position:fixed;top:0;left:0"></canvas> -->
+  <div id="overlay">
+			<div>
+				<button id="startButton">Click to Play</button>
+				<p>Automatic audio playback requires a user interaction.</p>
+			</div>
+	</div>
+  <div id="container"></div>
+  <script type="text/javascript">
+    if ( WEBGL.isWebGLAvailable() === false ) {
+  		document.body.appendChild( WEBGL.getWebGLErrorMessage() );
+  	}
+
+    var scene, camera, renderer, analyser, uniforms, context;
+    var startButton = document.getElementById( 'startButton' );
+	  startButton.addEventListener( 'click', init );
+
+    function init() {
+    //  clock = new THREE.Clock();
+
+      var fftSize = 128;
+      var container = document.getElementById("container");
+
+      var overlay = document.getElementById( 'overlay' );
+		  overlay.remove();
+
+      scene = new THREE.Scene();
+		  camera = new THREE.OrthographicCamera( - 1, 1, 1, - 1, 0, 1 );
+
+      var listener = new THREE.AudioListener();
+      camera.add( listener );
+
+      // create an Audio source
+      var sound = new THREE.Audio( listener );
+
+      // load a sound and set it as the Audio object's buffer
+      var audioLoader = new THREE.AudioLoader();
+      audioLoader.load( 'audio/Foewi - Frequencies.mp3', function( buffer ) {
+      	sound.setBuffer( buffer );
+      	sound.setLoop(true);
+      //	sound.setVolume(0.5);
+      	sound.play();
+      });
+
+      analyser = new THREE.AudioAnalyser(sound, fftSize);
+
+      uniforms = {
+			     spectrum: { value: new THREE.DataTexture( analyser.data, fftSize/2, 1, THREE.LuminanceFormat,THREE.UnsignedByteType, ) }
+           , time: { value: Date.now() }
+           , resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight)}
+		  };
+
+      var material = new THREE.ShaderMaterial( {
+  			uniforms: uniforms,
+  			vertexShader: document.getElementById( 'vertexShader' ).textContent,
+  			fragmentShader: document.getElementById( 'fragmentShader' ).textContent
+		  });
+
+      var geometry = new THREE.PlaneBufferGeometry( 2, 2);
+  		var mesh = new THREE.Mesh( geometry, material );
+  		scene.add( mesh );
+
+
+      renderer = new THREE.WebGLRenderer( );
+      renderer.setSize( window.innerWidth, window.innerHeight );
+      window.addEventListener( 'resize', onResize, false );
+      renderer.setClearColor( 0x000000 );
+      renderer.setPixelRatio( window.devicePixelRatio );
+      container.appendChild( renderer.domElement );
+      animate();
+
+
+
+    }
+
+    function onResize() {
+      //uniforms.resolution.value.needsUpdate = true;
+  		renderer.setSize( window.innerWidth, window.innerHeight );
+  	}
+  	function animate() {
+  		requestAnimationFrame( animate );
+      uniforms.time.value.needsUpdate = true;
+      render();
+  	}
+
+    function render() {
+  		analyser.getFrequencyData();
+  		uniforms.spectrum.value.needsUpdate = true;
+  		renderer.render( scene, camera );
+	  }
+
+
+
+
+
+
+  </script>
+</body>
+</html>
